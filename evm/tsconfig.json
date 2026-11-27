@@ -1,7 +1,6 @@
 {
   "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
-    "baseUrl": "./",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "resolveJsonModule": true,
@@ -12,8 +11,7 @@
     "paths": {
       "@/*": ["./*"],
       "@ethers-v6": ["./generated-types/ethers/index.js"],
-      "@test-helpers": ["./test/helpers/index.js"],
-      "@scripts": ["./scripts/index.js"]
+      "@test-helpers": ["./test/helpers/index.js"]
     }
   }
 }
