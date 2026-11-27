@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.28;
 
 import {BtcTx, TxView} from "./BtcTx.sol";
 
@@ -24,56 +24,70 @@ library Bip143 {
     uint8 internal constant SINGLE = 0x03;
     uint8 internal constant ANYONECANPAY = 0x80;
 
-    function validHashType(uint8 hashType) internal pure returns (bool) {
-        uint8 base = hashType & ~ANYONECANPAY;
-        return base >= ALL && base <= SINGLE;
+    function validHashType(uint8 hashType_) internal pure returns (bool) {
+        uint8 base_ = hashType_ & ~ANYONECANPAY;
+        return base_ >= ALL && base_ <= SINGLE;
     }
 
     /// @dev hashType must satisfy validHashType.
     function sigHash(
-        bytes calldata raw,
-        TxView memory t,
-        uint256 index,
-        bytes memory scriptCode,
-        uint64 amount,
-        uint8 hashType
+        bytes calldata raw_,
+        TxView memory t_,
+        uint256 index_,
+        bytes memory scriptCode_,
+        uint64 amount_,
+        uint8 hashType_
     ) internal pure returns (bytes32) {
-        bytes memory head = _head(raw, t, index, hashType);
-        bytes memory tail = _tail(raw, t, index, hashType);
-        bytes memory preimage =
-            abi.encodePacked(head, BtcTx.compactSizeBytes(scriptCode.length), scriptCode, BtcTx.le64(amount), tail);
-        return sha256(abi.encodePacked(sha256(preimage)));
+        bytes memory head_ = _head(raw_, t_, index_, hashType_);
+        bytes memory tail_ = _tail(raw_, t_, index_, hashType_);
+        bytes memory preimage_ = abi.encodePacked(
+            head_,
+            BtcTx.compactSizeBytes(scriptCode_.length),
+            scriptCode_,
+            BtcTx.le64(amount_),
+            tail_
+        );
+        return sha256(abi.encodePacked(sha256(preimage_)));
     }
 
     /// nVersion, hashPrevouts, hashSequence, outpoint
-    function _head(bytes calldata raw, TxView memory t, uint256 index, uint8 hashType)
-        private
-        pure
-        returns (bytes memory)
-    {
-        bool acp = hashType & ANYONECANPAY != 0;
-        bytes32 hashPrevouts;
-        bytes32 hashSequence;
-        if (!acp) hashPrevouts = sha256(abi.encodePacked(BtcTx.shaPrevouts(raw, t)));
-        if (!acp && hashType == ALL) hashSequence = sha256(abi.encodePacked(BtcTx.shaSequences(raw, t)));
-        uint256 o = BtcTx.inputOffset(t, index);
-        return abi.encodePacked(raw[0:4], hashPrevouts, hashSequence, raw[o:o + 36]);
+    function _head(
+        bytes calldata raw_,
+        TxView memory t_,
+        uint256 index_,
+        uint8 hashType_
+    ) private pure returns (bytes memory) {
+        bool acp_ = hashType_ & ANYONECANPAY != 0;
+        bytes32 hashPrevouts_;
+        bytes32 hashSequence_;
+        if (!acp_) hashPrevouts_ = sha256(abi.encodePacked(BtcTx.shaPrevouts(raw_, t_)));
+        if (!acp_ && hashType_ == ALL)
+            hashSequence_ = sha256(abi.encodePacked(BtcTx.shaSequences(raw_, t_)));
+        uint256 o_ = BtcTx.inputOffset(t_, index_);
+        return abi.encodePacked(raw_[0:4], hashPrevouts_, hashSequence_, raw_[o_:o_ + 36]);
     }
 
     /// nSequence, hashOutputs, nLockTime, nHashType
-    function _tail(bytes calldata raw, TxView memory t, uint256 index, uint8 hashType)
-        private
-        pure
-        returns (bytes memory)
-    {
-        uint8 base = hashType & ~ANYONECANPAY;
-        bytes32 hashOutputs;
-        if (base == ALL) {
-            hashOutputs = sha256(abi.encodePacked(BtcTx.shaOutputs(raw, t)));
-        } else if (base == SINGLE && index < BtcTx.nOut(t)) {
-            hashOutputs = sha256(abi.encodePacked(sha256(BtcTx.outBytes(raw, t, index))));
+    function _tail(
+        bytes calldata raw_,
+        TxView memory t_,
+        uint256 index_,
+        uint8 hashType_
+    ) private pure returns (bytes memory) {
+        uint8 base_ = hashType_ & ~ANYONECANPAY;
+        bytes32 hashOutputs_;
+        if (base_ == ALL) {
+            hashOutputs_ = sha256(abi.encodePacked(BtcTx.shaOutputs(raw_, t_)));
+        } else if (base_ == SINGLE && index_ < BtcTx.nOut(t_)) {
+            hashOutputs_ = sha256(abi.encodePacked(sha256(BtcTx.outBytes(raw_, t_, index_))));
         }
-        uint256 o = BtcTx.inputOffset(t, index);
-        return abi.encodePacked(raw[o + 37:o + 41], hashOutputs, raw[raw.length - 4:raw.length], BtcTx.le32(hashType));
+        uint256 o_ = BtcTx.inputOffset(t_, index_);
+        return
+            abi.encodePacked(
+                raw_[o_ + 37:o_ + 41],
+                hashOutputs_,
+                raw_[raw_.length - 4:raw_.length],
+                BtcTx.le32(hashType_)
+            );
     }
 }

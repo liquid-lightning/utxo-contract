@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.28;
 
 import {Secp256k1} from "./Secp256k1.sol";
 
@@ -30,64 +30,78 @@ library Ecdsa {
     /// @notice Parses a Bitcoin signature: DER followed by one hash type byte.
     /// Enforces BIP66 (IsValidSignatureEncoding), 0 < r < n and 0 < s <= n/2
     /// (low S). The hash type is returned unchecked.
-    function parse(bytes memory sig) internal pure returns (bool ok, uint256 r, uint256 s, uint8 hashType) {
-        uint256 len = sig.length;
+    function parse(
+        bytes memory sig_
+    ) internal pure returns (bool ok_, uint256 r_, uint256 s_, uint8 hashType_) {
+        uint256 len_ = sig_.length;
         // 0x30 [total-len] 0x02 [R-len] [R] 0x02 [S-len] [S] [sighash]
-        if (len < 9 || len > 73) return (false, 0, 0, 0);
-        if (uint8(sig[0]) != 0x30 || uint8(sig[1]) != len - 3) return (false, 0, 0, 0);
-        uint256 lenR = uint8(sig[3]);
-        if (5 + lenR >= len) return (false, 0, 0, 0);
-        uint256 lenS = uint8(sig[5 + lenR]);
-        if (lenR + lenS + 7 != len) return (false, 0, 0, 0);
-        if (!_derInt(sig, 2, lenR) || !_derInt(sig, lenR + 4, lenS)) return (false, 0, 0, 0);
-        r = _readInt(sig, 4, lenR);
-        s = _readInt(sig, 6 + lenR, lenS);
+        if (len_ < 9 || len_ > 73) return (false, 0, 0, 0);
+        if (uint8(sig_[0]) != 0x30 || uint8(sig_[1]) != len_ - 3) return (false, 0, 0, 0);
+        uint256 lenR_ = uint8(sig_[3]);
+        if (5 + lenR_ >= len_) return (false, 0, 0, 0);
+        uint256 lenS_ = uint8(sig_[5 + lenR_]);
+        if (lenR_ + lenS_ + 7 != len_) return (false, 0, 0, 0);
+        if (!_derInt(sig_, 2, lenR_) || !_derInt(sig_, lenR_ + 4, lenS_)) return (false, 0, 0, 0);
+        r_ = _readInt(sig_, 4, lenR_);
+        s_ = _readInt(sig_, 6 + lenR_, lenS_);
         // _readInt returns N (out of range) for integers wider than 32 bytes.
-        if (r == 0 || r >= Secp256k1.N || s == 0 || s > HALF_N) return (false, 0, 0, 0);
-        return (true, r, s, uint8(sig[len - 1]));
+        if (r_ == 0 || r_ >= Secp256k1.N || s_ == 0 || s_ > HALF_N) return (false, 0, 0, 0);
+        return (true, r_, s_, uint8(sig_[len_ - 1]));
     }
 
     /// @notice The point of a 33-byte compressed key: prefix 02 or 03, x < p
     /// and on the curve (see the library notes, 1).
-    function liftKey(bytes memory pubkey) internal view returns (bool ok, uint256 x, uint256 y) {
-        if (pubkey.length != 33) return (false, 0, 0);
-        uint8 prefix = uint8(pubkey[0]);
-        if (prefix != 0x02 && prefix != 0x03) return (false, 0, 0);
+    function liftKey(
+        bytes memory pubkey_
+    ) internal view returns (bool ok_, uint256 x_, uint256 y_) {
+        if (pubkey_.length != 33) return (false, 0, 0);
+        uint8 prefix_ = uint8(pubkey_[0]);
+        if (prefix_ != 0x02 && prefix_ != 0x03) return (false, 0, 0);
         assembly ("memory-safe") {
-            x := mload(add(pubkey, 33))
+            x_ := mload(add(pubkey_, 33))
         }
-        (ok, y) = Secp256k1.liftX(x, prefix & 1);
+        (ok_, y_) = Secp256k1.liftX(x_, prefix_ & 1);
     }
 
     /// @notice True iff (r, s) is a valid ECDSA signature of `digest` by the
     /// point (x, y) from liftKey (see the library notes, 2 and 3).
-    function verify(uint256 x, uint256 y, bytes32 digest, uint256 r, uint256 s) internal pure returns (bool) {
-        address expected = Secp256k1.addr(x, y);
-        if (ecrecover(digest, 27, bytes32(r), bytes32(s)) == expected) return true;
-        return ecrecover(digest, 28, bytes32(r), bytes32(s)) == expected;
+    function verify(
+        uint256 x_,
+        uint256 y_,
+        bytes32 digest_,
+        uint256 r_,
+        uint256 s_
+    ) internal pure returns (bool) {
+        address expected_ = Secp256k1.addr(x_, y_);
+        if (ecrecover(digest_, 27, bytes32(r_), bytes32(s_)) == expected_) return true;
+        return ecrecover(digest_, 28, bytes32(r_), bytes32(s_)) == expected_;
     }
 
     /// BIP66 rules for one INTEGER at sig[off] (its 0x02 tag) of length `n`:
     /// non-empty, not negative, no unnecessary leading zero byte.
-    function _derInt(bytes memory sig, uint256 off, uint256 n) private pure returns (bool) {
-        if (uint8(sig[off]) != 0x02 || n == 0) return false;
-        uint8 first = uint8(sig[off + 2]);
-        if (first & 0x80 != 0) return false;
-        if (n > 1 && first == 0 && uint8(sig[off + 3]) & 0x80 == 0) return false;
+    function _derInt(bytes memory sig_, uint256 off_, uint256 n_) private pure returns (bool) {
+        if (uint8(sig_[off_]) != 0x02 || n_ == 0) return false;
+        uint8 first_ = uint8(sig_[off_ + 2]);
+        if (first_ & 0x80 != 0) return false;
+        if (n_ > 1 && first_ == 0 && uint8(sig_[off_ + 3]) & 0x80 == 0) return false;
         return true;
     }
 
     /// Big-endian integer of n bytes at sig[off]; N if it does not fit 32 bytes.
-    function _readInt(bytes memory sig, uint256 off, uint256 n) private pure returns (uint256 v) {
-        if (n == 33) {
+    function _readInt(
+        bytes memory sig_,
+        uint256 off_,
+        uint256 n_
+    ) private pure returns (uint256 v_) {
+        if (n_ == 33) {
             // only a leading zero byte can make a valid 33-byte INTEGER of a value < 2^256
-            if (uint8(sig[off]) != 0) return Secp256k1.N;
-            off += 1;
-            n = 32;
+            if (uint8(sig_[off_]) != 0) return Secp256k1.N;
+            off_ += 1;
+            n_ = 32;
         }
-        if (n > 32) return Secp256k1.N;
+        if (n_ > 32) return Secp256k1.N;
         assembly ("memory-safe") {
-            v := shr(mul(8, sub(32, n)), mload(add(add(sig, 32), off)))
+            v_ := shr(mul(8, sub(32, n_)), mload(add(add(sig_, 32), off_)))
         }
     }
 }

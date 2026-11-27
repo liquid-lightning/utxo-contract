@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.28;
 
 // Every revert of UtxoChain (SPEC 4.2). Errors about one input carry its index.
 

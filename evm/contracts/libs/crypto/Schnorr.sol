@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.28;
 
 import {Secp256k1} from "./Secp256k1.sol";
 
@@ -33,39 +33,49 @@ library Schnorr {
     uint256 internal constant N = Secp256k1.N;
 
     /// sha256("BIP0340/challenge")
-    bytes32 internal constant CHALLENGE_TAG = 0x7bb52d7a9fef58323eb1bf7a407db382d2f3f2d81bb1224f49fe518f6d48d37c;
+    bytes32 internal constant CHALLENGE_TAG =
+        0x7bb52d7a9fef58323eb1bf7a407db382d2f3f2d81bb1224f49fe518f6d48d37c;
 
     /// @notice BIP340 verify for a 32-byte message (the taproot case), with
     /// the signature as its two 32-byte halves r and s.
-    function verify(bytes32 pubkeyX, bytes32 msgHash, uint256 rx, uint256 s) internal view returns (bool) {
-        return verifyBytes(pubkeyX, abi.encodePacked(msgHash), rx, s);
+    function verify(
+        bytes32 pubkeyX_,
+        bytes32 msgHash_,
+        uint256 rx_,
+        uint256 s_
+    ) internal view returns (bool) {
+        return verifyBytes(pubkeyX_, abi.encodePacked(msgHash_), rx_, s_);
     }
 
     /// @notice BIP340 verify for a message of any length (BIP340 allows it;
     /// the official vectors 15-18 use it).
-    function verifyBytes(bytes32 pubkeyX, bytes memory message, uint256 rx, uint256 s)
-        internal
-        view
-        returns (bool)
-    {
-        uint256 px = uint256(pubkeyX);
+    function verifyBytes(
+        bytes32 pubkeyX_,
+        bytes memory message_,
+        uint256 rx_,
+        uint256 s_
+    ) internal view returns (bool) {
+        uint256 px_ = uint256(pubkeyX_);
         // BIP340 fails if px >= p, r >= p or s >= n. We also fail for px == 0
         // (not on the curve: 7 is not a square mod p) and px in [n, p) (see
         // the library notes). Whether px is on the curve is checked by
         // ecrecover, which returns 0 when it cannot decompress its r.
-        if (px == 0 || px >= N || rx >= P || s >= N) return false;
-        (bool ok, uint256 ry) = Secp256k1.liftX(rx, 0);
-        if (!ok) return false; // r is not the x of a curve point
-        uint256 e = uint256(sha256(abi.encodePacked(CHALLENGE_TAG, CHALLENGE_TAG, rx, pubkeyX, message))) % N;
-        if (e == 0) return false; // see the library notes
+        if (px_ == 0 || px_ >= N || rx_ >= P || s_ >= N) return false;
+        (bool ok_, uint256 ry_) = Secp256k1.liftX(rx_, 0);
+        if (!ok_) return false; // r is not the x of a curve point
+        uint256 e_ =
+            uint256(
+                sha256(abi.encodePacked(CHALLENGE_TAG, CHALLENGE_TAG, rx_, pubkeyX_, message_))
+            ) % N;
+        if (e_ == 0) return false; // see the library notes
         // h = -s * px mod n; h == 0 iff s == 0 (see the library notes)
-        uint256 h = mulmod(s, px, N);
-        if (h == 0) return false;
-        h = N - h;
+        uint256 h_ = mulmod(s_, px_, N);
+        if (h_ == 0) return false;
+        h_ = N - h_;
         // sEc = -e * px mod n, never 0 since e, px are in [1, n) and n is prime
-        uint256 sEc = N - mulmod(e, px, N);
-        address q = ecrecover(bytes32(h), 27, bytes32(px), bytes32(sEc));
+        uint256 sEc_ = N - mulmod(e_, px_, N);
+        address q_ = ecrecover(bytes32(h_), 27, bytes32(px_), bytes32(sEc_));
         // q == 0: px not on the curve, or s*G - e*P is the point at infinity.
-        return q != address(0) && q == Secp256k1.addr(rx, ry);
+        return q_ != address(0) && q_ == Secp256k1.addr(rx_, ry_);
     }
 }

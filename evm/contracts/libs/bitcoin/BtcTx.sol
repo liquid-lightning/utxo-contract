@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.28;
 
 import {
     TxTooLarge,
@@ -78,291 +78,341 @@ library BtcTx {
     uint256 private constant HAVE_AMOUNTS = 8;
     uint256 private constant HAVE_SCRIPTS = 16;
 
-    function parse(bytes calldata raw) internal pure returns (TxView memory t) {
-        uint256 len = raw.length;
-        if (len > MAX_TX_SIZE) revert TxTooLarge();
-        t.version = uint32(le(raw, 0, 4));
-        uint256 off = 4;
-        bool segwit;
-        if (u8(raw, 4) == 0) {
-            if (u8(raw, 5) != 1) revert BadSegwitFlag();
-            segwit = true;
-            off = 6;
+    function parse(bytes calldata raw_) internal pure returns (TxView memory t_) {
+        uint256 len_ = raw_.length;
+        if (len_ > MAX_TX_SIZE) revert TxTooLarge();
+        t_.version = uint32(le(raw_, 0, 4));
+        uint256 off_ = 4;
+        bool segwit_;
+        if (u8(raw_, 4) == 0) {
+            if (u8(raw_, 5) != 1) revert BadSegwitFlag();
+            segwit_ = true;
+            off_ = 6;
         }
-        t.bodyStart = off;
+        t_.bodyStart = off_;
 
-        uint256 n;
-        (n, off) = compactSize(raw, off);
-        if (n == 0) revert NoInputs();
-        if (n > (len - off) / INPUT_SIZE) revert Truncated();
-        t.nIn = n;
-        t.inStart = off;
-        for (uint256 i; i < n; ++i) {
-            if (u8(raw, off + 36) != 0) revert ScriptSigNotEmpty(i);
-            off += INPUT_SIZE;
+        uint256 n_;
+        (n_, off_) = compactSize(raw_, off_);
+        if (n_ == 0) revert NoInputs();
+        if (n_ > (len_ - off_) / INPUT_SIZE) revert Truncated();
+        t_.nIn = n_;
+        t_.inStart = off_;
+        for (uint256 i; i < n_; ++i) {
+            if (u8(raw_, off_ + 36) != 0) revert ScriptSigNotEmpty(i);
+            off_ += INPUT_SIZE;
         }
 
-        (n, off) = compactSize(raw, off);
-        if (n == 0) revert NoOutputs();
-        if (n > (len - off) / 9) revert Truncated();
-        uint256[] memory outOff = new uint256[](n + 1);
-        for (uint256 j; j < n; ++j) {
-            outOff[j] = off;
-            uint256 sl;
-            (sl, off) = compactSize(raw, off + 8);
-            if (sl > len - off) revert Truncated();
-            off += sl;
+        (n_, off_) = compactSize(raw_, off_);
+        if (n_ == 0) revert NoOutputs();
+        if (n_ > (len_ - off_) / 9) revert Truncated();
+        uint256[] memory outOff_ = new uint256[](n_ + 1);
+        for (uint256 j; j < n_; ++j) {
+            outOff_[j] = off_;
+            uint256 sl_;
+            (sl_, off_) = compactSize(raw_, off_ + 8);
+            if (sl_ > len_ - off_) revert Truncated();
+            off_ += sl_;
         }
-        outOff[n] = off;
-        t.outOff = outOff;
+        outOff_[n_] = off_;
+        t_.outOff = outOff_;
 
-        uint256 nIn = t.nIn;
-        uint256[] memory witOff = new uint256[](nIn);
-        if (segwit) {
-            bool any;
-            for (uint256 i; i < nIn; ++i) {
-                witOff[i] = off;
-                uint256 items;
-                (items, off) = compactSize(raw, off);
-                if (items > len - off) revert Truncated();
-                if (items != 0) any = true;
-                for (uint256 k; k < items; ++k) {
-                    uint256 il;
-                    (il, off) = compactSize(raw, off);
-                    if (il > len - off) revert Truncated();
-                    off += il;
+        uint256 nIn_ = t_.nIn;
+        uint256[] memory witOff_ = new uint256[](nIn_);
+        if (segwit_) {
+            bool any_;
+            for (uint256 i; i < nIn_; ++i) {
+                witOff_[i] = off_;
+                uint256 items_;
+                (items_, off_) = compactSize(raw_, off_);
+                if (items_ > len_ - off_) revert Truncated();
+                if (items_ != 0) any_ = true;
+                for (uint256 k; k < items_; ++k) {
+                    uint256 il_;
+                    (il_, off_) = compactSize(raw_, off_);
+                    if (il_ > len_ - off_) revert Truncated();
+                    off_ += il_;
                 }
             }
-            if (!any) revert EmptyWitnesses();
+            if (!any_) revert EmptyWitnesses();
         } else {
-            for (uint256 i; i < nIn; ++i) {
-                witOff[i] = NO_WITNESS;
+            for (uint256 i; i < nIn_; ++i) {
+                witOff_[i] = NO_WITNESS;
             }
         }
-        t.witOff = witOff;
+        t_.witOff = witOff_;
 
-        if (off + 4 > len) revert Truncated();
-        if (off + 4 != len) revert TrailingBytes();
-        t.locktime = uint32(le(raw, off, 4));
+        if (off_ + 4 > len_) revert Truncated();
+        if (off_ + 4 != len_) revert TrailingBytes();
+        t_.locktime = uint32(le(raw_, off_, 4));
 
         // txid: the serialization without marker, flag and witnesses, which
         // is the raw tx with those three parts left out.
-        bytes32 h = segwit
-            ? sha256(abi.encodePacked(raw[0:4], raw[t.bodyStart:outOff[n]], raw[off:len]))
-            : sha256(raw);
-        t.txid = sha256(abi.encodePacked(h));
+        bytes32 h_ =
+            segwit_
+                ? sha256(
+                    abi.encodePacked(raw_[0:4], raw_[t_.bodyStart:outOff_[n_]], raw_[off_:len_])
+                )
+                : sha256(raw_);
+        t_.txid = sha256(abi.encodePacked(h_));
     }
 
     // ------------------------------------------------------------ fields
 
-    function inputOffset(TxView memory t, uint256 i) internal pure returns (uint256) {
-        return t.inStart + INPUT_SIZE * i;
+    function inputOffset(TxView memory t_, uint256 i_) internal pure returns (uint256) {
+        return t_.inStart + INPUT_SIZE * i_;
     }
 
-    function prevTxid(bytes calldata raw, TxView memory t, uint256 i) internal pure returns (bytes32 w) {
-        uint256 off = inputOffset(t, i);
+    function prevTxid(
+        bytes calldata raw_,
+        TxView memory t_,
+        uint256 i_
+    ) internal pure returns (bytes32 w_) {
+        uint256 off_ = inputOffset(t_, i_);
         assembly ("memory-safe") {
-            w := calldataload(add(raw.offset, off))
+            w_ := calldataload(add(raw_.offset, off_))
         }
     }
 
-    function prevVout(bytes calldata raw, TxView memory t, uint256 i) internal pure returns (uint32) {
-        return uint32(le(raw, inputOffset(t, i) + 32, 4));
+    function prevVout(
+        bytes calldata raw_,
+        TxView memory t_,
+        uint256 i_
+    ) internal pure returns (uint32) {
+        return uint32(le(raw_, inputOffset(t_, i_) + 32, 4));
     }
 
-    function sequence(bytes calldata raw, TxView memory t, uint256 i) internal pure returns (uint32) {
-        return uint32(le(raw, inputOffset(t, i) + 37, 4));
+    function sequence(
+        bytes calldata raw_,
+        TxView memory t_,
+        uint256 i_
+    ) internal pure returns (uint32) {
+        return uint32(le(raw_, inputOffset(t_, i_) + 37, 4));
     }
 
-    function nOut(TxView memory t) internal pure returns (uint256) {
-        return t.outOff.length - 1;
+    function nOut(TxView memory t_) internal pure returns (uint256) {
+        return t_.outOff.length - 1;
     }
 
-    function outAmount(bytes calldata raw, TxView memory t, uint256 j) internal pure returns (uint64) {
-        return uint64(le(raw, t.outOff[j], 8));
+    function outAmount(
+        bytes calldata raw_,
+        TxView memory t_,
+        uint256 j_
+    ) internal pure returns (uint64) {
+        return uint64(le(raw_, t_.outOff[j_], 8));
     }
 
-    function outScript(bytes calldata raw, TxView memory t, uint256 j) internal pure returns (bytes calldata) {
-        (uint256 sl, uint256 off) = compactSize(raw, t.outOff[j] + 8);
-        return raw[off:off + sl];
+    function outScript(
+        bytes calldata raw_,
+        TxView memory t_,
+        uint256 j_
+    ) internal pure returns (bytes calldata) {
+        (uint256 sl_, uint256 off_) = compactSize(raw_, t_.outOff[j_] + 8);
+        return raw_[off_:off_ + sl_];
     }
 
     /// Output j as it is serialized (amount, compact size, script).
-    function outBytes(bytes calldata raw, TxView memory t, uint256 j) internal pure returns (bytes calldata) {
-        return raw[t.outOff[j]:t.outOff[j + 1]];
+    function outBytes(
+        bytes calldata raw_,
+        TxView memory t_,
+        uint256 j_
+    ) internal pure returns (bytes calldata) {
+        return raw_[t_.outOff[j_]:t_.outOff[j_ + 1]];
     }
 
     /// The witness of input i. Reverts with BadWitness(i) above 5 items.
-    function stack(bytes calldata raw, TxView memory t, uint256 i) internal pure returns (Stack memory s) {
-        uint256 off = t.witOff[i];
-        if (off == NO_WITNESS) return s;
-        (s.n, off) = compactSize(raw, off);
-        if (s.n > MAX_STACK) revert BadWitness(i);
-        for (uint256 k; k < s.n; ++k) {
-            (s.len[k], off) = compactSize(raw, off);
-            s.off[k] = off;
-            off += s.len[k];
+    function stack(
+        bytes calldata raw_,
+        TxView memory t_,
+        uint256 i_
+    ) internal pure returns (Stack memory s_) {
+        uint256 off_ = t_.witOff[i_];
+        if (off_ == NO_WITNESS) return s_;
+        (s_.n, off_) = compactSize(raw_, off_);
+        if (s_.n > MAX_STACK) revert BadWitness(i_);
+        for (uint256 k; k < s_.n; ++k) {
+            (s_.len[k], off_) = compactSize(raw_, off_);
+            s_.off[k] = off_;
+            off_ += s_.len[k];
         }
     }
 
-    function item(bytes calldata raw, Stack memory s, uint256 k) internal pure returns (bytes calldata) {
-        return raw[s.off[k]:s.off[k] + s.len[k]];
+    function item(
+        bytes calldata raw_,
+        Stack memory s_,
+        uint256 k_
+    ) internal pure returns (bytes calldata) {
+        return raw_[s_.off[k_]:s_.off[k_] + s_.len[k_]];
     }
 
     // ------------------------------------------------------------ hashes of the parts (BIP341 names)
 
     /// sha_prevouts: SHA256 of every input's outpoint.
-    function shaPrevouts(bytes calldata raw, TxView memory t) internal pure returns (bytes32) {
-        if (t.have & HAVE_PREVOUTS == 0) {
-            t.shaPrevouts = sha256(_gather(raw, t.inStart, t.nIn, 36, 0));
-            t.have |= HAVE_PREVOUTS;
+    function shaPrevouts(bytes calldata raw_, TxView memory t_) internal pure returns (bytes32) {
+        if (t_.have & HAVE_PREVOUTS == 0) {
+            t_.shaPrevouts = sha256(_gather(raw_, t_.inStart, t_.nIn, 36, 0));
+            t_.have |= HAVE_PREVOUTS;
         }
-        return t.shaPrevouts;
+        return t_.shaPrevouts;
     }
 
     /// sha_sequences: SHA256 of every input's sequence.
-    function shaSequences(bytes calldata raw, TxView memory t) internal pure returns (bytes32) {
-        if (t.have & HAVE_SEQUENCES == 0) {
-            t.shaSequences = sha256(_gather(raw, t.inStart, t.nIn, 4, 37));
-            t.have |= HAVE_SEQUENCES;
+    function shaSequences(bytes calldata raw_, TxView memory t_) internal pure returns (bytes32) {
+        if (t_.have & HAVE_SEQUENCES == 0) {
+            t_.shaSequences = sha256(_gather(raw_, t_.inStart, t_.nIn, 4, 37));
+            t_.have |= HAVE_SEQUENCES;
         }
-        return t.shaSequences;
+        return t_.shaSequences;
     }
 
     /// sha_outputs: SHA256 of the serialized outputs, which lie contiguous in the raw tx.
-    function shaOutputs(bytes calldata raw, TxView memory t) internal pure returns (bytes32) {
-        if (t.have & HAVE_OUTPUTS == 0) {
-            t.shaOutputs = sha256(raw[t.outOff[0]:t.outOff[t.outOff.length - 1]]);
-            t.have |= HAVE_OUTPUTS;
+    function shaOutputs(bytes calldata raw_, TxView memory t_) internal pure returns (bytes32) {
+        if (t_.have & HAVE_OUTPUTS == 0) {
+            t_.shaOutputs = sha256(raw_[t_.outOff[0]:t_.outOff[t_.outOff.length - 1]]);
+            t_.have |= HAVE_OUTPUTS;
         }
-        return t.shaOutputs;
+        return t_.shaOutputs;
     }
 
     /// sha_amounts: SHA256 of every spent amount (8 bytes LE each).
-    function shaAmounts(TxView memory t, Prevout[] calldata pv) internal pure returns (bytes32) {
-        if (t.have & HAVE_AMOUNTS == 0) {
-            uint256 n = pv.length;
-            bytes memory b = new bytes(8 * n + 32); // room for the last 32-byte store
-            for (uint256 i; i < n; ++i) {
-                bytes8 a = le64(pv[i].amount);
+    function shaAmounts(TxView memory t_, Prevout[] calldata pv_) internal pure returns (bytes32) {
+        if (t_.have & HAVE_AMOUNTS == 0) {
+            uint256 n_ = pv_.length;
+            bytes memory b_ = new bytes(8 * n_ + 32); // room for the last 32-byte store
+            for (uint256 i; i < n_; ++i) {
+                bytes8 a_ = le64(pv_[i].amount);
                 assembly ("memory-safe") {
-                    mstore(add(add(b, 32), mul(8, i)), a)
+                    mstore(add(add(b_, 32), mul(8, i)), a_)
                 }
             }
             assembly ("memory-safe") {
-                mstore(b, mul(8, n))
+                mstore(b_, mul(8, n_))
             }
-            t.shaAmounts = sha256(b);
-            t.have |= HAVE_AMOUNTS;
+            t_.shaAmounts = sha256(b_);
+            t_.have |= HAVE_AMOUNTS;
         }
-        return t.shaAmounts;
+        return t_.shaAmounts;
     }
 
     /// sha_scriptpubkeys: SHA256 of every spent scriptPubKey with its compact size.
-    function shaScripts(TxView memory t, Prevout[] calldata pv) internal pure returns (bytes32) {
-        if (t.have & HAVE_SCRIPTS == 0) {
+    function shaScripts(TxView memory t_, Prevout[] calldata pv_) internal pure returns (bytes32) {
+        if (t_.have & HAVE_SCRIPTS == 0) {
             // one allocation (a loop of abi.encodePacked would copy the
             // buffer for every input: quadratic memory)
-            uint256 total;
-            for (uint256 i; i < pv.length; ++i) {
-                total += compactSizeBytes(pv[i].scriptPubKey.length).length + pv[i].scriptPubKey.length;
+            uint256 total_;
+            for (uint256 i; i < pv_.length; ++i) {
+                total_ +=
+                    compactSizeBytes(pv_[i].scriptPubKey.length).length +
+                    pv_[i].scriptPubKey.length;
             }
-            bytes memory b = new bytes(total);
-            uint256 at;
-            for (uint256 i; i < pv.length; ++i) {
-                bytes memory size = compactSizeBytes(pv[i].scriptPubKey.length);
-                bytes calldata spk = pv[i].scriptPubKey;
+            bytes memory b_ = new bytes(total_);
+            uint256 at_;
+            for (uint256 i; i < pv_.length; ++i) {
+                bytes memory size_ = compactSizeBytes(pv_[i].scriptPubKey.length);
+                bytes calldata spk_ = pv_[i].scriptPubKey;
                 assembly ("memory-safe") {
-                    let dst := add(add(b, 32), at)
-                    mcopy(dst, add(size, 32), mload(size))
-                    calldatacopy(add(dst, mload(size)), spk.offset, spk.length)
+                    let dst := add(add(b_, 32), at_)
+                    mcopy(dst, add(size_, 32), mload(size_))
+                    calldatacopy(add(dst, mload(size_)), spk_.offset, spk_.length)
                 }
-                at += size.length + spk.length;
+                at_ += size_.length + spk_.length;
             }
-            t.shaScripts = sha256(b);
-            t.have |= HAVE_SCRIPTS;
+            t_.shaScripts = sha256(b_);
+            t_.have |= HAVE_SCRIPTS;
         }
-        return t.shaScripts;
+        return t_.shaScripts;
     }
 
     /// n fields of `width` bytes, the first at raw[start + skip], one per 41-byte input.
-    function _gather(bytes calldata raw, uint256 start, uint256 n, uint256 width, uint256 skip)
-        private
-        pure
-        returns (bytes memory b)
-    {
-        b = new bytes(n * width);
+    function _gather(
+        bytes calldata raw_,
+        uint256 start_,
+        uint256 n_,
+        uint256 width_,
+        uint256 skip_
+    ) private pure returns (bytes memory b_) {
+        b_ = new bytes(n_ * width_);
         assembly ("memory-safe") {
-            let dst := add(b, 32)
-            let src := add(add(raw.offset, start), skip)
-            for { let i := 0 } lt(i, n) { i := add(i, 1) } {
-                calldatacopy(add(dst, mul(i, width)), add(src, mul(i, 41)), width)
+            let dst := add(b_, 32)
+            let src := add(add(raw_.offset, start_), skip_)
+            for {
+                let i := 0
+            } lt(i, n_) {
+                i := add(i, 1)
+            } {
+                calldatacopy(add(dst, mul(i, width_)), add(src, mul(i, 41)), width_)
             }
         }
     }
 
     // ------------------------------------------------------------ primitives
 
-    function u8(bytes calldata raw, uint256 off) internal pure returns (uint256 v) {
-        if (off >= raw.length) revert Truncated();
+    function u8(bytes calldata raw_, uint256 off_) internal pure returns (uint256 v_) {
+        if (off_ >= raw_.length) revert Truncated();
         assembly ("memory-safe") {
-            v := byte(0, calldataload(add(raw.offset, off)))
+            v_ := byte(0, calldataload(add(raw_.offset, off_)))
         }
     }
 
     /// Little-endian unsigned integer of `len` (1 to 8) bytes at raw[off].
-    function le(bytes calldata raw, uint256 off, uint256 len) internal pure returns (uint256 v) {
-        if (off + len > raw.length) revert Truncated();
-        uint64 w;
+    function le(
+        bytes calldata raw_,
+        uint256 off_,
+        uint256 len_
+    ) internal pure returns (uint256 v_) {
+        if (off_ + len_ > raw_.length) revert Truncated();
+        uint64 w_;
         assembly ("memory-safe") {
             // the 8 bytes at raw[off] as a big-endian uint64 (past the end of
             // calldata, calldataload reads zeros)
-            w := shr(192, calldataload(add(raw.offset, off)))
+            w_ := shr(192, calldataload(add(raw_.offset, off_)))
         }
         // byte-reversed, the first byte is the lowest; keep the first `len`
-        v = uint64(le64(w)) & ((1 << (8 * len)) - 1);
+        v_ = uint64(le64(w_)) & ((1 << (8 * len_)) - 1);
     }
 
     /// A canonical compact size at raw[off], and the offset after it.
-    function compactSize(bytes calldata raw, uint256 off) internal pure returns (uint256 v, uint256 next) {
-        uint256 first = u8(raw, off);
-        if (first < 0xfd) return (first, off + 1);
-        if (first == 0xfd) {
-            v = le(raw, off + 1, 2);
-            if (v < 0xfd) revert NonCanonicalCompactSize();
-            return (v, off + 3);
+    function compactSize(
+        bytes calldata raw_,
+        uint256 off_
+    ) internal pure returns (uint256 v_, uint256 next_) {
+        uint256 first_ = u8(raw_, off_);
+        if (first_ < 0xfd) return (first_, off_ + 1);
+        if (first_ == 0xfd) {
+            v_ = le(raw_, off_ + 1, 2);
+            if (v_ < 0xfd) revert NonCanonicalCompactSize();
+            return (v_, off_ + 3);
         }
-        if (first == 0xfe) {
-            v = le(raw, off + 1, 4);
-            if (v <= 0xffff) revert NonCanonicalCompactSize();
-            return (v, off + 5);
+        if (first_ == 0xfe) {
+            v_ = le(raw_, off_ + 1, 4);
+            if (v_ <= 0xffff) revert NonCanonicalCompactSize();
+            return (v_, off_ + 5);
         }
-        v = le(raw, off + 1, 8);
-        if (v <= 0xffffffff) revert NonCanonicalCompactSize();
-        return (v, off + 9);
+        v_ = le(raw_, off_ + 1, 8);
+        if (v_ <= 0xffffffff) revert NonCanonicalCompactSize();
+        return (v_, off_ + 9);
     }
 
-    function compactSizeBytes(uint256 n) internal pure returns (bytes memory) {
-        if (n < 0xfd) return abi.encodePacked(uint8(n));
-        if (n <= 0xffff) return abi.encodePacked(uint8(0xfd), bytes2(le16(uint16(n))));
-        if (n <= 0xffffffff) return abi.encodePacked(uint8(0xfe), le32(uint32(n)));
-        return abi.encodePacked(uint8(0xff), le64(uint64(n)));
+    function compactSizeBytes(uint256 n_) internal pure returns (bytes memory) {
+        if (n_ < 0xfd) return abi.encodePacked(uint8(n_));
+        if (n_ <= 0xffff) return abi.encodePacked(uint8(0xfd), bytes2(le16(uint16(n_))));
+        if (n_ <= 0xffffffff) return abi.encodePacked(uint8(0xfe), le32(uint32(n_)));
+        return abi.encodePacked(uint8(0xff), le64(uint64(n_)));
     }
 
-    function le16(uint16 x) internal pure returns (bytes2) {
-        return bytes2((x >> 8) | (x << 8));
+    function le16(uint16 x_) internal pure returns (bytes2) {
+        return bytes2((x_ >> 8) | (x_ << 8));
     }
 
-    function le32(uint32 x) internal pure returns (bytes4) {
-        x = ((x & 0xff00ff00) >> 8) | ((x & 0x00ff00ff) << 8);
-        x = (x >> 16) | (x << 16);
-        return bytes4(x);
+    function le32(uint32 x_) internal pure returns (bytes4) {
+        x_ = ((x_ & 0xff00ff00) >> 8) | ((x_ & 0x00ff00ff) << 8);
+        x_ = (x_ >> 16) | (x_ << 16);
+        return bytes4(x_);
     }
 
-    function le64(uint64 x) internal pure returns (bytes8) {
-        x = ((x & 0xff00ff00ff00ff00) >> 8) | ((x & 0x00ff00ff00ff00ff) << 8);
-        x = ((x & 0xffff0000ffff0000) >> 16) | ((x & 0x0000ffff0000ffff) << 16);
-        x = (x >> 32) | (x << 32);
-        return bytes8(x);
+    function le64(uint64 x_) internal pure returns (bytes8) {
+        x_ = ((x_ & 0xff00ff00ff00ff00) >> 8) | ((x_ & 0x00ff00ff00ff00ff) << 8);
+        x_ = ((x_ & 0xffff0000ffff0000) >> 16) | ((x_ & 0x0000ffff0000ffff) << 16);
+        x_ = (x_ >> 32) | (x_ << 32);
+        return bytes8(x_);
     }
 }
