@@ -34,9 +34,10 @@ export interface ChainLike extends BaseContract {
 }
 
 export async function expectCustomError(call: Promise<unknown>, contract: BaseContract, err: ErrJson) {
+  // (a string argument is a bytes32, in hex without its prefix)
   await expect(call)
     .to.be.revertedWithCustomError(contract, err.name)
-    .withArgs(...err.args);
+    .withArgs(...err.args.map((arg) => (typeof arg == "string" ? hex(arg) : arg)));
 }
 
 /**

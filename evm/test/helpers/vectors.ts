@@ -10,7 +10,8 @@ export interface PrevoutJson {
 
 export interface ErrJson {
   name: string;
-  args: number[];
+  /** Numbers, or a bytes32 as hex without its prefix. */
+  args: (number | string)[];
 }
 
 /** A valid transaction, with what the tests check after submitting it. */
@@ -102,4 +103,45 @@ export function isExit(script: string): boolean {
 
 export function isOpReturn(script: string): boolean {
   return script.startsWith("6a");
+}
+
+// ------------------------------------------------------------ v2 (Elements format)
+
+export interface AssetPrevoutJson extends PrevoutJson {
+  /** The asset tag as serialized, in hex. */
+  asset: string;
+}
+
+export interface AssetCaseJson extends Omit<CaseJson, "prevouts" | "outs" | "fee"> {
+  prevouts: AssetPrevoutJson[];
+  /** An output with an empty script is a fee. */
+  outs: { asset: string; amount: number; script: string }[];
+}
+
+export interface AssetBadJson extends Omit<BadJson, "prevouts" | "seeds"> {
+  prevouts: AssetPrevoutJson[];
+  seeds: (AssetPrevoutJson & { txid: string; vout: number })[];
+}
+
+export interface VectorsV2 {
+  genesisTime: number;
+  interval: number;
+  feeAsset: string;
+  tokens: { address: string; asset: string; decimals: number; unitsPerSat: string }[];
+  /** The transactions of an asset channel's life, in the order applied. */
+  channels: { name: string; asset: string; cases: AssetCaseJson[] }[];
+  /** Standalone valid cases, each for a fresh chain. */
+  valid: AssetCaseJson[];
+  bad: AssetBadJson[];
+  deposits: {
+    chainId: number;
+    address: string;
+    txs: { token: string | null; asset: string; amount: number; script: string; rawTx: string; txid: string }[];
+    spend: AssetCaseJson;
+  };
+}
+
+/** A prevout as the contract's `AssetPrevout` struct. */
+export function assetPrevout(p: AssetPrevoutJson) {
+  return { asset: hex(p.asset), amount: BigInt(p.amount), scriptPubKey: hex(p.script), height: p.height };
 }
