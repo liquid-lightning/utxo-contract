@@ -1,5 +1,18 @@
-out/
-cache/
-# Regenerable test data (deterministic, ~35 MB): written by
-# contrib/evmchan/gen_vectors.py (see README.md)
-test/generated/
+node_modules
+.env
+.DS_Store
+
+# Hardhat files
+cache
+artifacts
+coverage.json
+coverage
+
+# Typechain generated files
+generated-types
+
+# Hardhat migrate
+.storage.json
+
+# Full reference vectors (regenerable, see README.md)
+test/data/v1/full

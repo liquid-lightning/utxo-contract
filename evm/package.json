@@ -1,0 +1,53 @@
+{
+  "name": "utxo-contract",
+  "version": "0.2.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "UtxoChain: an EVM contract that holds assets as a Bitcoin-style UTXO set",
+  "keywords": [
+    "solidity",
+    "smart-contracts",
+    "lightning",
+    "bitcoin"
+  ],
+  "files": [
+    "**/*.sol",
+    "!mock/**/*"
+  ],
+  "scripts": {
+    "build": "npx hardhat build",
+    "clean": "npx hardhat clean",
+    "test": "npx hardhat test mocha",
+    "coverage": "npx hardhat test mocha --coverage",
+    "private-network": "npx hardhat node",
+    "deploy-localhost": "npx hardhat migrate --network localhost",
+    "deploy-base-sepolia": "npx hardhat migrate --network baseSepolia --verify",
+    "lint-fix": "npm run lint-sol-fix && npm run lint-ts-fix && npm run lint-json-fix && npm run slippy-check && npm run eslint-check",
+    "lint-json-fix": "prettier --write \"./*.json\"",
+    "lint-ts-fix": "prettier --write \"./**/*.ts\" --ignore-path .prettierignore",
+    "lint-sol-fix": "prettier --write \"contracts/**/*.sol\"",
+    "slippy-check": "slippy \"./contracts/**/*.sol\"",
+    "eslint-check": "eslint . --ext .ts"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^3.0.7",
+    "@solarity/hardhat-migrate": "4.0.0-rc.0",
+    "@solidstate/hardhat-contract-sizer": "^3.0.3",
+    "@trivago/prettier-plugin-sort-imports": "^6.0.2",
+    "@tsconfig/node22": "^22.0.5",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^26.1.1",
+    "chai": "^6.2.2",
+    "eslint": "^9.39.4",
+    "ethers": "^6.17.0",
+    "hardhat": "^3.9.1",
+    "mocha": "^11.7.6",
+    "prettier": "^3.9.5",
+    "prettier-plugin-solidity": "^2.3.1",
+    "slippy": "^0.3.1",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.63.0"
+  }
+}

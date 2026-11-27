@@ -4,8 +4,8 @@ pragma solidity ^0.8.24;
 import {BtcTx, TxView, Stack, Prevout} from "./BtcTx.sol";
 import {Bip143} from "./Bip143.sol";
 import {TaprootSighash} from "./TaprootSighash.sol";
-import {Ecdsa} from "./Ecdsa.sol";
-import {Schnorr} from "./Schnorr.sol";
+import {Ecdsa} from "../crypto/Ecdsa.sol";
+import {Schnorr} from "../crypto/Schnorr.sol";
 import {
     BadWitness,
     KeyHashMismatch,
@@ -18,7 +18,7 @@ import {
     BadSignature,
     BadPublicKey,
     NoMatchingOutput
-} from "./Errors.sol";
+} from "../utils/Errors.sol";
 
 /// @title The scriptPubKeys the contract can spend (SPEC 4.3.7): P2WPKH, P2TR
 /// key path, and P2WSH with the scripts Core Lightning builds for the anchors

@@ -12,7 +12,7 @@ import {
     TrailingBytes,
     ScriptSigNotEmpty,
     BadWitness
-} from "./Errors.sol";
+} from "../utils/Errors.sol";
 
 /// An output being spent, as `submit` takes it (SPEC 4.2). `height` is the
 /// height it was created at. All three are bound to the UTXO set by

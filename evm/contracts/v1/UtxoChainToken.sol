@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28; // transient storage
 
-import {UtxoChainBase} from "./UtxoChainBase.sol";
-import {BadToken, BadUnitsPerSat, TokenTransferFailed, TokenAmountMismatch, Reentrancy} from "./Errors.sol";
+import {AUtxoChain} from "./AUtxoChain.sol";
+import {BadToken, BadUnitsPerSat, TokenTransferFailed, TokenAmountMismatch, Reentrancy} from "../libs/utils/Errors.sol";
 
 interface IERC20 {
     function balanceOf(address who) external view returns (uint256);
@@ -11,7 +11,7 @@ interface IERC20 {
     function transferFrom(address from, address to, uint256 amount) external returns (bool);
 }
 
-/// @title UtxoChainBase holding one ERC-20 token (SPEC 4.6): 1 sat =
+/// @title AUtxoChain holding one ERC-20 token (SPEC 4.6): 1 sat =
 /// UNITS_PER_SAT token units, one instance per token.
 ///
 /// - `deposit(amount, script)` takes `amount` units with `transferFrom` (the
@@ -26,7 +26,7 @@ interface IERC20 {
 ///   a token with transfer hooks can't interleave them.
 /// Rebasing tokens break the invariant between calls, where no check can see
 /// it, so they MUST NOT be used (SPEC 4.6).
-contract UtxoChainToken is UtxoChainBase {
+contract UtxoChainToken is AUtxoChain {
     /// The token, and its units per sat.
     address public immutable TOKEN;
     uint256 public immutable UNITS_PER_SAT;
@@ -38,7 +38,7 @@ contract UtxoChainToken is UtxoChainBase {
     /// @param unitsPerSat token units per sat (SPEC 4.6): 10^(decimals - 8)
     ///        for a token with at least 8 decimals, else 1. A token without
     ///        decimals() may take any power of ten up to 10^18.
-    constructor(uint256 interval, address token, uint256 unitsPerSat) UtxoChainBase(interval) {
+    constructor(uint256 interval, address token, uint256 unitsPerSat) AUtxoChain(interval) {
         if (token.code.length == 0) revert BadToken();
         try IERC20(token).balanceOf(address(this)) returns (uint256) {}
         catch {

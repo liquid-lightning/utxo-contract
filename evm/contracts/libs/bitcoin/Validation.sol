@@ -13,7 +13,7 @@ import {
     TimeRelativeLockUnsupported,
     RelativeLockNotMet,
     UnsupportedScriptPubKey
-} from "./Errors.sol";
+} from "../utils/Errors.sol";
 
 /// @title SPEC 4.3: whether a tx is valid at height h against the prevouts
 /// its submitter claims, except for what needs the UTXO set (each prevout's

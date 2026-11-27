@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {UtxoChainBase} from "./UtxoChainBase.sol";
-import {WithdrawFailed} from "./Errors.sol";
+import {AUtxoChain} from "./AUtxoChain.sol";
+import {WithdrawFailed} from "../libs/utils/Errors.sol";
 
-/// @title UtxoChainBase holding ETH (SPEC 4): 1 sat = 10^10 wei.
+/// @title AUtxoChain holding ETH (SPEC 4): 1 sat = 10^10 wei.
 /// `deposit` takes msg.value; `withdraw` pays with a plain call. The ABI and
 /// the behaviour are those of M1's UtxoChain.
-contract UtxoChain is UtxoChainBase {
+contract UtxoChain is AUtxoChain {
     uint256 internal constant SAT = 1e10; // wei per sat
 
     /// @param interval seconds per virtual block (2 on anvil, 60 on Base Sepolia)
-    constructor(uint256 interval) UtxoChainBase(interval) {}
+    constructor(uint256 interval) AUtxoChain(interval) {}
 
     function _unit() internal pure override returns (uint256) {
         return SAT;

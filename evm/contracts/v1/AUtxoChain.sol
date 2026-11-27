@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {BtcTx, TxView, Prevout} from "./BtcTx.sol";
-import {Validation} from "./Validation.sol";
-import "./Errors.sol";
+import {BtcTx, TxView, Prevout} from "../libs/bitcoin/BtcTx.sol";
+import {Validation} from "../libs/bitcoin/Validation.sol";
+import "../libs/utils/Errors.sol";
 
 /// @title A Bitcoin-style UTXO set, spent by Bitcoin transactions (SPEC 4).
 /// The asset is left to the two deployables (SPEC 9): `UtxoChain` holds ETH
@@ -30,7 +30,7 @@ import "./Errors.sol";
 /// from spent UTXOs to new UTXOs, exits and the fee (inputs >= outputs + fee
 /// exactly, OP_RETURN amounts leaving the right-hand side); a withdraw lowers
 /// both by the same amount (`_pay`).
-abstract contract UtxoChainBase {
+abstract contract AUtxoChain {
     uint256 internal constant MAX_DEPOSIT_SCRIPT = 10_000;
 
     event TxApplied(uint32 indexed height, bytes32 indexed txid, bytes rawTx);
