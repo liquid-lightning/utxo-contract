@@ -39,6 +39,16 @@ export default defineConfig({
       // under the limit; test/Size.test.ts checks the deployable ones.
       allowUnlimitedContractSize: true,
     },
+    // The same, on Base Sepolia's chain id: the reference's deposit cases
+    // commit to it (test/v1/Reference.test.ts).
+    simulatedBaseSepolia: {
+      type: "edr-simulated",
+      chainType: "l1",
+      chainId: 84532,
+      hardfork: "osaka",
+      initialDate: "2023-11-14T22:00:00Z",
+      allowUnlimitedContractSize: true,
+    },
     localhost: {
       type: "http",
       chainType: "l1",
@@ -83,7 +93,7 @@ export default defineConfig({
   },
   typechain: {
     outDir: "generated-types/ethers",
-    alwaysGenerateOverloads: true,
+    alwaysGenerateOverloads: false,
     dontOverrideCompile: false,
     discriminateTypes: true,
     tsNocheck: false,
