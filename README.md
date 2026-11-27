@@ -11,12 +11,10 @@ validates.
 > It is open-source code for test networks and must not hold funds that
 > matter.
 
-The Foundry project is in [`evm/`](evm/), and [`evm/README.md`](evm/README.md)
-covers the contracts, the tests and deployment. The project has no external
-dependencies: no forge-std and no git submodules. Some paths in that README
-still refer to the layout the code had inside the CLN tree (`contrib/evmchan`,
-`contracts/evm`); the Python generator it mentions now lives in the evm-plugin
-repository.
+The Hardhat project is in [`evm/`](evm/), and [`evm/README.md`](evm/README.md)
+covers the contracts, the tests and deployment. The contracts have no
+external dependencies. The Python generator of the test vectors lives in the
+evm-plugin repository.
 
 ## Related repositories
 
