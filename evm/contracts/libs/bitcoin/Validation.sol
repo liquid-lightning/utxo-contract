@@ -2,6 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {BtcTx, TxView, Stack, Prevout} from "./BtcTx.sol";
+import {Bip143} from "./Bip143.sol";
 import {Templates} from "./Templates.sol";
 import {
     PrevoutCountMismatch,
@@ -62,7 +63,7 @@ library Validation {
         _checkNullPrevouts(raw_, t_);
         fee_ = _checkAmounts(raw_, t_, pv_);
         _checkSigops(raw_, t_);
-        _checkLockTime(raw_, t_, h_, mtp_);
+        checkLockTime(raw_, t_, h_, mtp_);
         _checkRelativeLocks(raw_, t_, pv_, h_);
         _checkScripts(raw_, t_, pv_);
     }
@@ -168,12 +169,12 @@ library Validation {
 
     /// 4.3.5 (BIP113): final if every sequence is 0xffffffff, or nLockTime is a
     /// height below h, or a time below MTP(h).
-    function _checkLockTime(
+    function checkLockTime(
         bytes calldata raw_,
         TxView memory t_,
         uint256 h_,
         uint256 mtp_
-    ) private pure {
+    ) internal pure {
         uint32 lt_ = t_.locktime;
         if (lt_ < LOCKTIME_THRESHOLD ? lt_ < h_ : lt_ < mtp_) return;
         for (uint256 i; i < t_.nIn; ++i) {
@@ -222,14 +223,14 @@ library Validation {
                 Templates.p2wpkh(
                     raw_,
                     t_,
-                    Templates.Input(i, pv_[i].amount, w_),
+                    Templates.Input(i, pv_[i].amount, w_, Bip143.sigHash),
                     bytes20(spk_[2:22])
                 );
             } else if (spk_.length == 34 && spk_[0] == 0x00 && spk_[1] == 0x20) {
                 Templates.p2wsh(
                     raw_,
                     t_,
-                    Templates.Input(i, pv_[i].amount, w_),
+                    Templates.Input(i, pv_[i].amount, w_, Bip143.sigHash),
                     bytes32(spk_[2:34])
                 );
             } else if (spk_.length == 34 && spk_[0] == 0x51 && spk_[1] == 0x20) {

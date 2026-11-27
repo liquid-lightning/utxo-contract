@@ -51,6 +51,16 @@ library Templates {
         uint256 index;
         uint64 amount;
         Stack w;
+        /// The segwit v0 signature hash of the transaction's format
+        /// (Bip143.sigHash for Bitcoin, ElementsSighash.sigHash for Elements).
+        function(
+            bytes calldata,
+            TxView memory,
+            uint256,
+            bytes memory,
+            uint64,
+            uint8
+        ) internal pure returns (bytes32) sigHash;
     }
 
     // ------------------------------------------------------------ P2WPKH
@@ -407,8 +417,18 @@ library Templates {
     ) private view {
         (bool ok_, uint256 r_, uint256 sigS_, uint8 hashType_) = Ecdsa.parse(sig_);
         if (!ok_ || !Bip143.validHashType(hashType_)) revert BadSignatureEncoding(s_.index);
-        bytes32 digest_ = Bip143.sigHash(raw_, t_, s_.index, scriptCode_, s_.amount, hashType_);
-        _verify(s_.index, pubkey_, digest_, r_, sigS_);
+        _verify(s_.index, pubkey_, _digest(raw_, t_, s_, scriptCode_, hashType_), r_, sigS_);
+    }
+
+    /// The digest a signature of input `s_` signs, in the transaction's format.
+    function _digest(
+        bytes calldata raw_,
+        TxView memory t_,
+        Input memory s_,
+        bytes memory scriptCode_,
+        uint8 hashType_
+    ) private pure returns (bytes32) {
+        return s_.sigHash(raw_, t_, s_.index, scriptCode_, s_.amount, hashType_);
     }
 
     function _verify(
