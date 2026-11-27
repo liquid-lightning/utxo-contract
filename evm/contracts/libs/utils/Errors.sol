@@ -59,3 +59,14 @@ error BadSignatureEncoding(uint256 input);
 error BadSignature(uint256 input);
 error BadPublicKey(uint256 input); // a key a CHECKSIG uses is not a compressed point on the curve
 error NoMatchingOutput(uint256 input); // taproot SINGLE without an output of the same index
+
+// v2: Elements-format transactions (ElementsTx, ElementsValidation)
+error IssuanceOrPegin(uint256 input); // the outpoint index has the issuance or the peg-in bit
+error NotExplicit(uint256 output); // a confidential asset or value, or a nonce
+error NonEmptyProof(); // a range proof, surjection proof or peg-in witness is not empty
+error AssetImbalance(bytes32 asset); // the inputs of an asset do not equal its outputs
+
+// v2: the multi-asset chain (MultiUtxoChain)
+error UnknownAsset(); // the token is not registered
+error AssetAlreadyRegistered();
+error BadFeeAsset(); // the fee asset is zero
