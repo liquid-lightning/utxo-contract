@@ -5,7 +5,7 @@ import hre from "hardhat";
 const MAX_CODE_SIZE = 24_576;
 
 describe("Size", () => {
-  for (const name of ["UtxoChain", "UtxoChainToken"]) {
+  for (const name of ["UtxoChain", "UtxoChainToken", "MultiUtxoChain"]) {
     it(`should keep ${name} under the contract size limit`, async () => {
       const artifact = await hre.artifacts.readArtifact(name);
 
